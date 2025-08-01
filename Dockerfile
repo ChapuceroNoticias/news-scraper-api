@@ -1,30 +1,48 @@
-# Usar imagen base con Python y Chrome
+# Usar imagen base con Python
 FROM python:3.11-slim
 
 # Instalar dependencias del sistema necesarias para Chrome
-RUN apt-get update && apt-get install -y \
+RUN apt-get update -qqy && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    unzip \
     wget \
     gnupg \
-    unzip \
-    curl \
     xvfb \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libatspi2.0-0 \
+    libcups2 \
+    libdbus-1-3 \
+    libdrm2 \
+    libgbm1 \
+    libgtk-3-0 \
+    libnspr4 \
+    libnss3 \
+    libu2f-udev \
+    libvulkan1 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxkbcommon0 \
+    libxrandr2 \
+    xdg-utils \
     && rm -rf /var/lib/apt/lists/*
 
-# Agregar repositorio de Google Chrome
-RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list
-
-# Instalar Google Chrome
-RUN apt-get update && apt-get install -y \
-    google-chrome-stable \
-    && rm -rf /var/lib/apt/lists/*
-
-# Instalar ChromeDriver
-RUN CHROME_DRIVER_VERSION=`curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE` \
-    && wget -O /tmp/chromedriver.zip http://chromedriver.storage.googleapis.com/\$CHROME_DRIVER_VERSION/chromedriver_linux64.zip \
-    && unzip /tmp/chromedriver.zip chromedriver -d /usr/local/bin/ \
-    && rm /tmp/chromedriver.zip \
-    && chmod +x /usr/local/bin/chromedriver
+# Instalar Google Chrome y ChromeDriver (versiones compatibles de Chrome for Testing)
+RUN LATEST=$(curl -sSL https://googlechromelabs.github.io/chrome-for-testing/LATEST_RELEASE_STABLE) && \
+    echo "Installing Chrome and ChromeDriver version: $LATEST" && \
+    wget -q -O chrome.zip https://storage.googleapis.com/chrome-for-testing-public/$LATEST/linux64/chrome-linux64.zip && \
+    unzip chrome.zip && \
+    mv chrome-linux64 /opt/chrome && \
+    ln -s /opt/chrome/chrome /usr/local/bin/chrome && \
+    rm chrome.zip && \
+    wget -q -O chromedriver.zip https://storage.googleapis.com/chrome-for-testing-public/$LATEST/linux64/chromedriver-linux64.zip && \
+    unzip chromedriver.zip && \
+    mv chromedriver-linux64/chromedriver /usr/local/bin/chromedriver && \
+    chmod +x /usr/local/bin/chromedriver && \
+    rm -rf chromedriver-linux64 chromedriver.zip
 
 # Configurar directorio de trabajo
 WORKDIR /app
