@@ -428,6 +428,61 @@ def batch_scrape():
             "error": str(e)
         }), 500
 
+# Configuración de Google Sheets
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+
+# Configuración para Google Sheets
+SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+CREDS_FILE = '/app/credentials.json'  # Ruta en Render para el archivo secreto
+SHEET_ID = '1IJjeJtMK4sz9cnXGJsLcmpjXMtxTDa4ZI9lCl2pHFSU'  # Reemplaza con el ID de tu Google Sheet
+WORKSHEET_NAME = 'Hoja 1'  # Reemplaza con el nombre de la pestaña
+COLUMN_NAME = 'Titulo'  # Nombre de la columna con los títulos
+
+def get_sheet_titles():
+    """Obtiene los títulos de la columna 'Titulo' en la hoja de Google Sheets."""
+    creds = ServiceAccountCredentials.from_json_keyfile_name(CREDS_FILE, SCOPE)
+    client = gspread.authorize(creds)
+    sheet = client.open_by_key(SHEET_ID).worksheet(WORKSHEET_NAME)
+    
+    # Obtener valores de la columna 'Titulo'
+    headers = sheet.row_values(1)
+    if COLUMN_NAME not in headers:
+        raise ValueError(f"Column '{COLUMN_NAME}' not found in sheet.")
+    
+    col_index = headers.index(COLUMN_NAME) + 1
+    titles = sheet.col_values(col_index)[1:]  # Excluye encabezado
+    return set(title.strip().lower() for title in titles if title.strip())
+
+@app.route('/filter_titles', methods=['POST'])
+def filter_titles():
+    """Filtra ítems que no coincidan con los títulos de Google Sheets."""
+    try:
+        items = request.get_json()
+        if not isinstance(items, list):
+            return jsonify({"error": "Input must be a list of items"}), 400
+        
+        sheet_titles = get_sheet_titles()
+        
+        filtered_items = [
+            item for item in items
+            if 'title' in item and item['title'].strip().lower() not in sheet_titles
+        ]
+        
+        return jsonify({
+            "success": True,
+            "data": filtered_items,
+            "count": len(filtered_items),
+            "timestamp": time.time()
+        })
+    except Exception as e:
+        logging.error(f"Error en endpoint /filter_titles: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
+
