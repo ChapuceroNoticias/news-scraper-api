@@ -436,7 +436,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 CREDS_FILE = '/app/credentials.json'  # Ruta en Render para el archivo secreto
 SHEET_ID = '1IJjeJtMK4sz9cnXGJsLcmpjXMtxTDa4ZI9lCl2pHFSU'  # Reemplaza con el ID de tu Google Sheet
-WORKSHEET_NAME = 'Hoja 1'  # Reemplaza con el nombre de la pestaña
+WORKSHEET_NAME = 'Peginas'  # Reemplaza con el nombre de la pestaña
 COLUMN_NAME = 'Titulo'  # Nombre de la columna con los títulos
 
 def get_sheet_titles():
@@ -485,4 +485,5 @@ def filter_titles():
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
+
 
